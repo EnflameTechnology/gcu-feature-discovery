@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gcu-feature-discovery
+  labels:
+    app.kubernetes.io/name: gcu-feature-discovery
+    app.kubernetes.io/version: 1.0.0
+    app.kubernetes.io/part-of: enflame-gcu
+  namespace: kube-system
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gcu-feature-discovery
+        app.kubernetes.io/version: 1.0.0
+        app.kubernetes.io/part-of: enflame-gcu
+    spec:
+      nodeName: NODE_NAME
+      containers:
+        - image: artifact.enflame.cn/enflame_docker_images/enflame/gcu-feature-discovery:latest
+          name: gcu-feature-discovery
+          args:
+            - "--oneshot"
+          volumeMounts:
+            - name: output-dir
+              mountPath: "/etc/kubernetes/node-feature-discovery/features.d"
+            - name: dmi-product-name
+              mountPath: "/sys/class/dmi/id/product_name"
+          securityContext:
+            privileged: true
+      volumes:
+        - name: output-dir
+          hostPath:
+            path: "/etc/kubernetes/node-feature-discovery/features.d"
+        - name: dmi-product-name
+          hostPath:
+            path: "/sys/class/dmi/id/product_name"
+      restartPolicy: Never

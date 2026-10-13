@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: gcu-feature-discovery
+  labels:
+    app.kubernetes.io/name: gcu-feature-discovery
+    app.kubernetes.io/version: 1.0.0
+    app.kubernetes.io/part-of: enflame-gcu
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gcu-feature-discovery
+      app.kubernetes.io/part-of: enflame-gcu
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gcu-feature-discovery
+        app.kubernetes.io/version: 1.0.0
+        app.kubernetes.io/part-of: enflame-gcu
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+        key: node-role.kubernetes.io/master
+      containers:
+        - image: artifact.enflame.cn/enflame_docker_images/enflame/gcu-feature-discovery:latest
+          name: gcu-feature-discovery
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: output-dir
+              mountPath: /etc/kubernetes/node-feature-discovery/features.d
+            - name: host-sys
+              mountPath: /sys
+            - name: topscloud-config
+              mountPath: /etc/topscloud
+            - name: host-efsmi
+              mountPath: /usr/bin/efsmi
+              readOnly: true
+          securityContext:
+            privileged: true
+      nodeSelector:
+        feature.node.kubernetes.io/pci-1200_1e36.present: "true"
+      volumes:
+        - name: output-dir
+          hostPath:
+            path: /etc/kubernetes/node-feature-discovery/features.d
+        - name: host-sys
+          hostPath:
+            path: /sys
+        - name: topscloud-config
+          hostPath:
+            path: /etc/topscloud
+            type: DirectoryOrCreate
+        - name: host-efsmi
+          hostPath:
+            path: /usr/bin/efsmi
+            type: File
